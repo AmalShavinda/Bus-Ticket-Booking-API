@@ -44,7 +44,7 @@ export const login = async (req, res, next) => {
           secure: process.env.NODE_ENV === "production",
         })
         .status(200)
-        .send({ details: { ...otherDetails }, isAdmin: user.isAdmin });
+        .send({token: token, details: { ...otherDetails }, isAdmin: user.isAdmin });
     } catch (error) {
       next(error);
     }

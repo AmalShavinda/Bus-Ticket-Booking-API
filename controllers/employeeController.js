@@ -16,6 +16,7 @@ export const createEmployee = async (req, res, next) => {
     }
 
     const newEmployee = new Employee(req.body);
+    
     await newEmployee.save();
     res.status(201).json(newEmployee);
   } catch (error) {

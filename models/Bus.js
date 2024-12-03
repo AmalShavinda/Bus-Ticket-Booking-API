@@ -8,6 +8,11 @@ const BusSchema = new mongoose.Schema(
       required: [true, "Bus ID is required"],
       trim: true,
     },
+    routeId: {
+      type: String,
+      required: [true, "Route ID is required"],
+      trim: true,
+    },
     registrationNumber: {
       type: String,
       unique: true,
