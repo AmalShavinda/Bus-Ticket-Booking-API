@@ -1,5 +1,49 @@
 import mongoose from "mongoose";
 
+const SeatSchema = new mongoose.Schema({
+  seatNumber: {
+    type: Number,
+    required: true,
+    min: 1,
+  },
+  isReserved: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+const TripScheduleSchema = new mongoose.Schema({
+  tripId: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  routeId: {
+    type: String,
+    required: true,
+  },
+  departureTime: {
+    type: Date,
+    required: true,
+  },
+  arrivalTime: {
+    type: Date,
+    required: true,
+  },
+  reservedSeats: {
+    type: [SeatSchema],
+    default: [],
+  },
+  availableSeats: {
+    type: Number,
+    default: function () {
+      return this.reservedSeats.length
+        ? this.bus.seatCapacity - this.reservedSeats.length
+        : this.bus.seatCapacity;
+    },
+  },
+});
+
 const BusSchema = new mongoose.Schema(
   {
     busId: {
@@ -49,6 +93,10 @@ const BusSchema = new mongoose.Schema(
       type: String,
       required: [true, "Owner is required"],
       trim: true,
+    },
+    tripSchedules: {
+      type: [TripScheduleSchema],
+      default: [],
     },
   },
   { timestamps: true }
