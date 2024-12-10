@@ -1,7 +1,7 @@
 import User from "../models/User.js";
 import Employee from "../models/Employee.js";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken";
 
 export const register = async (req, res, next) => {
   try {
@@ -23,22 +23,21 @@ export const register = async (req, res, next) => {
   }
 };
 
-
 // export const login = async (req, res, next) => {
 //     try {
 //       const user = await User.findOne({ username: req.body.username });
-  
+
 //       if (!user) return res.status(404).send("User not found");
-  
+
 //       const isPasswordCorrect = await bcrypt.compare(req.body.password, user.password);
 //       if (!isPasswordCorrect) return res.status(400).send("Wrong password or username");
-  
+
 //       const token = jwt.sign({ id: user._id, isAdmin: user.isAdmin }, process.env.JWT_SECRET, {
 //         expiresIn: "1d",
 //       });
-  
+
 //       const { password, ...otherDetails } = user._doc;
-  
+
 //       res
 //         .cookie("access_token", token, {
 //           httpOnly: true,
@@ -51,7 +50,6 @@ export const register = async (req, res, next) => {
 //     }
 //   };
 
-
 export const login = async (req, res, next) => {
   const { username, password } = req.body;
 
@@ -62,12 +60,12 @@ export const login = async (req, res, next) => {
 
     if (user) {
       // Determine role based on isAdmin
-      role = user.isAdmin ? 'admin' : 'client';
+      role = user.isAdmin ? "admin" : "client";
     } else {
       // If not found in User, check Employee collection
       user = await Employee.findOne({ username });
       if (user) {
-        role = 'employee';
+        role = "employee";
       }
     }
 
@@ -81,9 +79,9 @@ export const login = async (req, res, next) => {
       return res.status(400).send("Wrong username or password");
     }
 
-    // Generate token
+    // Generate token with role embedded in the payload
     const token = jwt.sign(
-      { id: user._id, role: role, isAdmin: user.isAdmin || false },
+      { id: user._id, isAdmin: user.isAdmin }, // Ensure isAdmin is included
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
@@ -98,10 +96,8 @@ export const login = async (req, res, next) => {
       })
       .status(200)
       .send({
-        token,
-        role,
+        token, // Only return the token
         details: { ...otherDetails },
-        isAdmin: user.isAdmin || false,
       });
   } catch (error) {
     next(error);
