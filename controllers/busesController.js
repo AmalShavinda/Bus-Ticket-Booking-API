@@ -2,17 +2,17 @@ import Bus from "../models/Bus.js";
 
 export const createBus = async (req, res, next) => {
   try {
-    const { busId, registrationNumber, chassisNumber } = req.body;
+    const { registrationNumber } = req.body;
 
     // Check for existing bus by unique fields
     const existingBus = await Bus.findOne({
-      $or: [{ busId }, { registrationNumber }, { chassisNumber }],
+      registrationNumber,
     });
 
     if (existingBus) {
       return res.status(400).json({
         message:
-          "Bus ID, Registration Number, or Chassis Number already exists",
+          "Registration Number already exists",
       });
     }
 

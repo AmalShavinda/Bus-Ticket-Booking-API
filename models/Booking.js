@@ -2,26 +2,20 @@ import mongoose from "mongoose";
 
 const BookingSchema = new mongoose.Schema(
   {
-    bookingId: {
-      type: String,
-      unique: true,
-      required: [true, "Booking ID is required"],
-      trim: true,
-    },
     busId: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Bus",
       required: [true, "Bus ID is required"],
-      trim: true,
     },
     routeId: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Route",
       required: [true, "Route ID is required"],
-      trim: true,
     },
     username: {
       type: String,
-      required: [true, "Booking ID is required"],
-      trim: true,
+      ref: "User",
+      required: [true, "Username is required"],
     },
     seats: {
       type: [Number], // Array of seat numbers
@@ -49,14 +43,30 @@ const BookingSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    tripDate: {
+      type: Date,
+      required: [true, "Trip date is required"],
+    },
     paymentDetails: {
       amount: {
         type: Number,
-        required: false,
+        required: function () {
+          return this.paymentStatus === "Completed";
+        },
+        min: [0, "Amount must be a positive number"],
       },
       transactionId: {
         type: String,
-        required: false,
+        required: function () {
+          return this.paymentStatus === "Completed";
+        },
+      },
+      paymentMethod: {
+        type: String,
+        enum: ["Credit Card", "Debit Card", "Cash", "Online Banking"],
+        required: function () {
+          return this.paymentStatus === "Completed";
+        },
       },
     },
   },
