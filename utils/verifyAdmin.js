@@ -17,11 +17,9 @@ import createError from "./error.js";
 // };
 
 export const verifyToken = (req, res, next) => {
-  const token =
-    req.cookies.access_token || 
-    (req.headers.Authorization && req.headers.Authorization.startsWith("Bearer ") 
-      ? req.headers.Authorization.split(" ")[1] 
-      : null);
+  const token = req.headers.authorization?.startsWith("Bearer ")
+    ? req.headers.authorization.split(" ")[1]
+    : req.cookies.access_token;
 
   if (!token) {
     return next(createError(401, "You are not authenticated!"));
