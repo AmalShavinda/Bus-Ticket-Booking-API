@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Booking from "../models/Booking.js";
 import Bus from "../models/Bus.js";
 import { v4 as uuidv4 } from "uuid";
@@ -11,7 +12,7 @@ export const createBooking = async (req, res, next) => {
     const { busId, routeId, username, seats, tripDate, paymentDetails } = req.body;
 
     // Validate bus
-    const bus = await Bus.findById(busId).session(session);
+    const bus = await Bus.findById(busId).populate('tripSchedules').session(session);
     if (!bus) {
       await session.abortTransaction();
       return res.status(404).json({ message: "Bus not found" });
@@ -20,7 +21,7 @@ export const createBooking = async (req, res, next) => {
     // Find the trip schedule
     const tripSchedule = bus.tripSchedules.find(schedule =>
       schedule.routeId.toString() === routeId &&
-      schedule.tripDate.toISOString() === new Date(tripDate).toISOString()
+      new Date(schedule.tripDate).toISOString() === new Date(tripDate).toISOString()
     );
 
     if (!tripSchedule) {
@@ -29,25 +30,30 @@ export const createBooking = async (req, res, next) => {
     }
 
     // Check seat availability
-    const reservedSet = new Set(tripSchedule.reservedSeats);
-    const unavailableSeats = seats.filter(seat => reservedSet.has(seat));
+    const unavailableSeats = tripSchedule.reservedSeats.filter(
+      seat => seats.includes(seat.seatNumber) && seat.isReserved
+    );
     if (unavailableSeats.length > 0) {
       await session.abortTransaction();
       return res.status(400).json({
-        message: `Seats ${unavailableSeats.join(", ")} are already reserved`,
+        message: `Seats ${unavailableSeats.map(seat => seat.seatNumber).join(", ")} are already reserved`,
       });
     }
 
-    // Update trip schedule seats
-    tripSchedule.reservedSeats.push(...seats);
-    tripSchedule.availableSeats -= seats.length;
+    // Update reservedSeats
+    tripSchedule.reservedSeats.forEach(seat => {
+      if (seats.includes(seat.seatNumber)) {
+        seat.isReserved = true;
+        seat.reservedBy = req.user._id; // Assuming `req.user` contains the authenticated user's data
+        seat.bookingDate = new Date();
+      }
+    });
 
-    // Save the bus document
+    // Save the updated bus
     await bus.save({ session });
 
-    // Create a booking
+    // Create booking
     const booking = new Booking({
-      bookingId: uuidv4(),
       busId,
       routeId,
       username,
@@ -70,6 +76,7 @@ export const createBooking = async (req, res, next) => {
     next(error);
   }
 };
+
 
 // Get all bookings
 export const getAllBookings = async (req, res, next) => {

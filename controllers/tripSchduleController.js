@@ -6,8 +6,17 @@ export const createTripSchedule = async (req, res) => {
   const { busId, routeId, tripDate, isReturnTrip, departureTime, arrivalTime } = req.body;
 
   try {
+    // Fetch bus details to get seat capacity
     const bus = await Bus.findOne({ _id: busId });
     if (!bus) return res.status(404).json({ message: "Bus not found" });
+
+    const seatCapacity = bus.seatCapacity;
+
+    // Initialize all seats as available
+    const reservedSeats = [];
+    for (let i = 1; i <= seatCapacity; i++) {
+      reservedSeats.push({ seatNumber: i, isReserved: false });
+    }
 
     // Create new trip schedule
     const newTripSchedule = {
@@ -18,8 +27,7 @@ export const createTripSchedule = async (req, res) => {
       isReturnTrip,
       departureTime,
       arrivalTime,
-      reservedSeats: [],
-      availableSeats: bus.seatCapacity,
+      reservedSeats,
     };
 
     bus.tripSchedules.push(newTripSchedule);

@@ -56,10 +56,9 @@ const TripScheduleSchema = new mongoose.Schema({
   reservedSeats: {
     type: [SeatSchema],
     default: function () {
-      // Initialize seats with all seats as not reserved
       const seats = [];
-      for (let i = 1; i <= this.seatCapacity; i++) {
-        seats.push({ seatNumber: i });
+      for (let i = 1; i <= this.busId.seatCapacity; i++) {
+        seats.push({ seatNumber: i, isReserved: false });
       }
       return seats;
     },
