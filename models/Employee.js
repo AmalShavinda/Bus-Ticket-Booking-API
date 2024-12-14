@@ -3,12 +3,6 @@ import bcrypt from "bcryptjs";
 
 const EmployeeSchema = new mongoose.Schema(
   {
-    employeeId: {
-      type: String,
-      unique: true,
-      required: [true, "Employee ID is required"],
-      trim: true,
-    },
     username: {
       type: String,
       unique: true,

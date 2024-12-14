@@ -21,13 +21,6 @@ const SubStationSchema = new mongoose.Schema({
 
 const RouteSchema = new mongoose.Schema(
   {
-    routeId: {
-      name: {
-        type: String,
-        required: [true, "Route name is required"],
-        minlength: [3, "Route name must be at least 3 characters"],
-      },
-    },
     startPoint: {
       name: {
         type: String,

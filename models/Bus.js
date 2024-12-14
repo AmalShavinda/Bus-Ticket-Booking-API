@@ -10,6 +10,15 @@ const SeatSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  reservedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User', // References the user who booked the seat
+    default: null,
+  },
+  bookingDate: {
+    type: Date,
+    default: null,
+  },
 });
 
 const TripScheduleSchema = new mongoose.Schema({
@@ -19,8 +28,22 @@ const TripScheduleSchema = new mongoose.Schema({
     unique: true,
   },
   routeId: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Route",
     required: true,
+  },
+  busId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Bus",
+    required: true,
+  },
+  tripDate: {
+    type: Date,
+    required: true, // Links the trip to a specific day
+  },
+  isReturnTrip: {
+    type: Boolean,
+    default: false, // Indicates if it's a return trip
   },
   departureTime: {
     type: Date,
@@ -32,41 +55,22 @@ const TripScheduleSchema = new mongoose.Schema({
   },
   reservedSeats: {
     type: [SeatSchema],
-    default: [],
-  },
-  availableSeats: {
-    type: Number,
     default: function () {
-      return this.reservedSeats.length
-        ? this.bus.seatCapacity - this.reservedSeats.length
-        : this.bus.seatCapacity;
+      const seats = [];
+      for (let i = 1; i <= this.busId.seatCapacity; i++) {
+        seats.push({ seatNumber: i, isReserved: false });
+      }
+      return seats;
     },
   },
 });
 
 const BusSchema = new mongoose.Schema(
   {
-    busId: {
-      type: String,
-      unique: true,
-      required: [true, "Bus ID is required"],
-      trim: true,
-    },
-    routeId: {
-      type: String,
-      required: [true, "Route ID is required"],
-      trim: true,
-    },
     registrationNumber: {
       type: String,
       unique: true,
       required: [true, "Registration number is required"],
-      trim: true,
-    },
-    chassisNumber: {
-      type: String,
-      unique: true,
-      required: [true, "Chassis number is required"],
       trim: true,
     },
     model: {
@@ -80,14 +84,14 @@ const BusSchema = new mongoose.Schema(
       min: [1, "Seat capacity must be at least 1"],
     },
     driver: {
-      type: String,
-      required: [true, "Driver is required"],
-      trim: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Employee", // Reference to the driver
+      required: true,
     },
     conductor: {
-      type: String,
-      required: [true, "Conductor is required"],
-      trim: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Employee", // Reference to the conductor
+      required: true,
     },
     owner: {
       type: String,

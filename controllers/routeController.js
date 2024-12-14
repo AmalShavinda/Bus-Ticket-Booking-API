@@ -2,10 +2,10 @@ import Route from "../models/Route.js";
 
 export const createRoute = async (req, res) => {
   try {
-    const { routeId, startPoint, endDestination } = req.body;
+    const { startPoint, endDestination } = req.body;
 
     const existingRoute = await Route.findOne({
-      $or: [{ routeId }, { startPoint }, { endDestination }],
+      $and: [{ startPoint }, { endDestination }],
     });
 
     if (existingRoute) {

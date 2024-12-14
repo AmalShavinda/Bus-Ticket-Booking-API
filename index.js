@@ -8,6 +8,7 @@ import busRoute from "./routes/busRoute.js";
 import employeeRoute from "./routes/employeeRoute.js";
 import busRoutesRoute from "./routes/busRoutesRoute.js";
 import bookingRoute from "./routes/bookingRoute.js";
+import tripRoute from "./routes/tripRoute.js";
 import swaggerDocs from "./utils/swagger.js";
 
 const app = express();
@@ -39,6 +40,7 @@ app.use("/api/v1/buses", busRoute);
 app.use("/api/v1/employees", employeeRoute);
 app.use("/api/v1/routes", busRoutesRoute);
 app.use("/api/v1/bookings", bookingRoute);
+app.use("/api/v1/trips", tripRoute);
 
 swaggerDocs(app, PORT);
 
