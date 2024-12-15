@@ -1,4 +1,5 @@
 import Bus from "../models/Bus.js";
+import Employee from "../models/Employee.js";
 import { v4 as uuidv4 } from "uuid";
 
 // Create a new trip schedule
@@ -133,6 +134,145 @@ export const updateSeatsAfterBooking = async (tripId, seats) => {
     return tripSchedule;
   } catch (error) {
     throw new Error(error.message);
+  }
+};
+
+// get trip for a day
+export const getTripsForDay = async (req, res) => {
+  try {
+    const { employeeId, date } = req.query;
+
+    // Validate input
+    if (!employeeId || !date) {
+      return res.status(400).json({
+        message: "Employee ID and date are required",
+      });
+    }
+
+    // Find the employee
+    const employee = await Employee.findById(employeeId);
+    if (!employee) {
+      return res.status(404).json({
+        message: "Employee not found",
+      });
+    }
+
+    // Check if the employee is a driver or conductor
+    if (!["Driver", "Conductor"].includes(employee.employeePosition)) {
+      return res.status(403).json({
+        message: "Access denied. Only drivers or conductors can view trips",
+      });
+    }
+
+    // Find the bus assigned to the employee
+    const bus = await Bus.findOne({
+      $or: [{ driver: employee._id }, { conductor: employee._id }],
+    }).populate({
+      path: "tripSchedules.routeId",
+      select: "startPoint endDestination", // Include relevant route details
+    });
+
+    if (!bus) {
+      return res.status(404).json({
+        message: "No bus assigned to the employee",
+      });
+    }
+
+    // Filter trips for the given date
+    const tripsForDay = bus.tripSchedules.filter((schedule) => {
+      const tripDate = new Date(schedule.tripDate).toISOString().split("T")[0];
+      const inputDate = new Date(date).toISOString().split("T")[0];
+      return tripDate === inputDate;
+    });
+
+    if (tripsForDay.length === 0) {
+      return res.status(404).json({
+        message: "No trips found for the given date",
+      });
+    }
+
+    // Format and respond with the trips
+    const formattedTrips = tripsForDay.map((trip) => ({
+      tripId: trip.tripId,
+      route: trip.routeId,
+      tripDate: trip.tripDate,
+      departureTime: trip.departureTime,
+      arrivalTime: trip.arrivalTime,
+      isReturnTrip: trip.isReturnTrip,
+    }));
+
+    res.status(200).json({
+      message: "Trips retrieved successfully",
+      trips: formattedTrips,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "An error occurred while fetching trips",
+      error: error.message,
+    });
+  }
+};
+
+export const getReservedSeats = async (req, res) => {
+  try {
+    const { tripId, employeeId } = req.query;
+
+    // Validate input
+    if (!tripId || !employeeId) {
+      return res.status(400).json({
+        message: "Trip ID and Employee ID are required",
+      });
+    }
+
+    // Find the bus assigned to the employee
+    const bus = await Bus.findOne({
+      $or: [{ driver: employeeId }, { conductor: employeeId }],
+      "tripSchedules.tripId": tripId,
+    }).populate("tripSchedules.routeId", "startPoint endDestination");
+
+    if (!bus) {
+      return res.status(404).json({
+        message: "No bus or trip found for the given employee and trip ID",
+      });
+    }
+
+    // Find the specific trip
+    const trip = bus.tripSchedules.find((schedule) => schedule.tripId === tripId);
+
+    if (!trip) {
+      return res.status(404).json({
+        message: "Trip not found",
+      });
+    }
+
+    // Extract reserved seats
+    const reservedSeats = trip.reservedSeats.filter((seat) => seat.isReserved);
+
+    // Response
+    res.status(200).json({
+      message: "Reserved seats retrieved successfully",
+      data: {
+        busDetails: {
+          registrationNumber: bus.registrationNumber,
+          model: bus.model,
+        },
+        tripDetails: {
+          route: {
+            startPoint: trip.routeId.startPoint.name,
+            endDestination: trip.routeId.endDestination.name,
+          },
+          tripDate: trip.tripDate,
+          departureTime: trip.departureTime,
+          arrivalTime: trip.arrivalTime,
+        },
+        reservedSeats,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "An error occurred while retrieving reserved seats",
+      error: error.message,
+    });
   }
 };
 

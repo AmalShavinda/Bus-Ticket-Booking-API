@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import Booking from "../models/Booking.js";
 import Bus from "../models/Bus.js";
-import { v4 as uuidv4 } from "uuid";
+import Employee from "../models/Employee.js";
 
 // Create a new booking
 export const createBooking = async (req, res, next) => {
