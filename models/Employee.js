@@ -20,6 +20,11 @@ const EmployeeSchema = new mongoose.Schema(
       required: [true, "Employee position is required"],
       trim: true,
     },
+    assignedBus: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Bus",
+      default: null, // Only assigned for Drivers/Conductors
+    },
     employeeMobile: {
       type: String,
       required: [true, "Employee mobile is required"],

@@ -12,6 +12,11 @@ const BookingSchema = new mongoose.Schema(
       ref: "Route",
       required: [true, "Route ID is required"],
     },
+    tripId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "TripSchedule", // Reference to TripSchedule model
+      required: [true, "Trip ID is required"],
+    },
     username: {
       type: String,
       ref: "User",
