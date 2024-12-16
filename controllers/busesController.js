@@ -72,7 +72,7 @@ export const getAllBuses = async (req, res, next) => {
 
 export const searchAvailableBuses = async (req, res, next) => {
   try {
-    const { startPoint, destination, date } = req.body;
+    const { startPoint, destination, date } = req.query;
 
     // Validate input
     if (!startPoint || !destination || !date) {
@@ -103,11 +103,9 @@ export const searchAvailableBuses = async (req, res, next) => {
     });
 
     if (!matchingRoutes.length) {
-      return res
-        .status(404)
-        .json({
-          message: "No routes found for the given start point and destination",
-        });
+      return res.status(404).json({
+        message: "No routes found for the given start point and destination",
+      });
     }
 
     const routeIds = matchingRoutes.map((route) => route._id);
@@ -119,9 +117,9 @@ export const searchAvailableBuses = async (req, res, next) => {
     }).populate("tripSchedules.routeId");
 
     if (!buses.length) {
-      return res
-        .status(404)
-        .json({ message: "No buses found for the given date and route" });
+      return res.status(404).json({
+        message: "No buses found for the given date and route",
+      });
     }
 
     // Step 3: Prepare response with matching buses and trip schedules
@@ -131,24 +129,29 @@ export const searchAvailableBuses = async (req, res, next) => {
       seatCapacity: bus.seatCapacity,
       tripSchedules: bus.tripSchedules
         .filter((schedule) => {
-          // Extract only the date part (YYYY-MM-DD) from both schedule and input date
+          // Extract only the date part (YYYY-MM-DD) from both the schedule date and input date
           const scheduleDate = new Date(schedule.tripDate)
             .toISOString()
             .split("T")[0];
           const inputDate = new Date(date).toISOString().split("T")[0];
 
-          // Compare the date parts only
-          return (
-            routeIds.includes(schedule.routeId.toString()) &&
-            scheduleDate === inputDate
-          );
+          // Return schedules that match the input date
+          return scheduleDate === inputDate;
         })
         .map((schedule) => ({
-          tripId: schedule.tripId,
-          route: schedule.routeId,
+          tripId: schedule._id, // Use schedule._id as the tripId
+          route: schedule.routeId, // Include routeId for reference
           tripDate: schedule.tripDate,
           departureTime: schedule.departureTime,
           arrivalTime: schedule.arrivalTime,
+          reservedSeats: schedule.reservedSeats
+            .filter((seat) => seat.isReserved) // Only include reserved seats
+            .map((seat) => ({
+              seatNumber: seat.seatNumber,
+              reservedBy: seat.reservedBy,
+              bookingDate: seat.bookingDate,
+              _id: seat._id,
+            })),
         })),
     }));
 

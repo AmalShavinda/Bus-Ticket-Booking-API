@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 import Booking from "../models/Booking.js";
 import Bus from "../models/Bus.js";
-import Employee from "../models/Employee.js";
 
 // Create a new booking
 export const createBooking = async (req, res, next) => {
@@ -142,5 +141,62 @@ export const deleteBooking = async (req, res, next) => {
     res.status(200).json({ message: "Booking deleted successfully" });
   } catch (error) {
     next(error);
+  }
+};
+
+export const cancelBooking = async (req, res) => {
+  try {
+    const { bookingId } = req.params; // Booking ID from request parameters
+
+    // Step 1: Find the booking
+    const booking = await Booking.findById(bookingId);
+
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    // Step 2: Find the bus with the relevant trip schedule
+    const bus = await Bus.findOne({ "tripSchedules._id": booking.tripId });
+
+    if (!bus) {
+      return res.status(404).json({ message: "Trip not found for the booking" });
+    }
+
+    console.log(bus)
+
+    // Step 3: Update reserved seats in the trip schedule
+    const tripSchedule = bus.tripSchedules.find(
+      (schedule) => schedule._id === booking.tripId
+    );
+
+    if (!tripSchedule) {
+      return res.status(404).json({ message: "Trip schedule not found" });
+    }
+
+    // Mark seats as available
+    booking.seats.forEach((seatNumber) => {
+      const seat = tripSchedule.reservedSeats.find(
+        (s) => s.seatNumber === seatNumber
+      );
+      if (seat) {
+        seat.isReserved = false;
+        seat.reservedBy = null;
+        seat.bookingDate = null;
+      }
+    });
+
+    // Save updated bus document
+    await bus.save();
+
+    // Step 4: Mark booking as cancelled
+    booking.paymentStatus = "Cancelled";
+    await booking.save();
+
+    // Respond with success
+    res.status(200).json({
+      message: "Booking cancelled successfully and seats are now available",
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };

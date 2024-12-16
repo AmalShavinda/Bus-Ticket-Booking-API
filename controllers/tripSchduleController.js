@@ -1,10 +1,12 @@
 import Bus from "../models/Bus.js";
 import Employee from "../models/Employee.js";
+import Booking from "../models/Booking.js";
 import { v4 as uuidv4 } from "uuid";
 
 // Create a new trip schedule
 export const createTripSchedule = async (req, res) => {
-  const { busId, routeId, tripDate, isReturnTrip, departureTime, arrivalTime } = req.body;
+  const { busId, routeId, tripDate, isReturnTrip, departureTime, arrivalTime } =
+    req.body;
 
   try {
     // Fetch bus details to get seat capacity
@@ -34,7 +36,12 @@ export const createTripSchedule = async (req, res) => {
     bus.tripSchedules.push(newTripSchedule);
     await bus.save();
 
-    res.status(201).json({ message: "Trip schedule created", tripSchedule: newTripSchedule });
+    res
+      .status(201)
+      .json({
+        message: "Trip schedule created",
+        tripSchedule: newTripSchedule,
+      });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -56,8 +63,12 @@ export const getTripScheduleById = async (req, res) => {
   const { tripId } = req.params;
 
   try {
-    const bus = await Bus.findOne({ "tripSchedules.tripId": tripId }, { "tripSchedules.$": 1 });
-    if (!bus) return res.status(404).json({ message: "Trip schedule not found" });
+    const bus = await Bus.findOne(
+      { "tripSchedules.tripId": tripId },
+      { "tripSchedules.$": 1 }
+    );
+    if (!bus)
+      return res.status(404).json({ message: "Trip schedule not found" });
 
     res.status(200).json(bus.tripSchedules[0]);
   } catch (error) {
@@ -68,14 +79,16 @@ export const getTripScheduleById = async (req, res) => {
 // Update a trip schedule
 export const updateTripSchedule = async (req, res) => {
   const { busId, tripId } = req.params;
-  const { routeId, tripDate, isReturnTrip, departureTime, arrivalTime } = req.body;
+  const { routeId, tripDate, isReturnTrip, departureTime, arrivalTime } =
+    req.body;
 
   try {
     const bus = await Bus.findOne({ busId });
     if (!bus) return res.status(404).json({ message: "Bus not found" });
 
     const tripSchedule = bus.tripSchedules.id(tripId);
-    if (!tripSchedule) return res.status(404).json({ message: "Trip schedule not found" });
+    if (!tripSchedule)
+      return res.status(404).json({ message: "Trip schedule not found" });
 
     // Update trip details
     if (routeId) tripSchedule.routeId = routeId;
@@ -100,7 +113,8 @@ export const deleteTripSchedule = async (req, res) => {
     if (!bus) return res.status(404).json({ message: "Bus not found" });
 
     const tripSchedule = bus.tripSchedules.id(tripId);
-    if (!tripSchedule) return res.status(404).json({ message: "Trip schedule not found" });
+    if (!tripSchedule)
+      return res.status(404).json({ message: "Trip schedule not found" });
 
     tripSchedule.remove();
     await bus.save();
@@ -116,14 +130,18 @@ export const updateSeatsAfterBooking = async (tripId, seats) => {
     const bus = await Bus.findOne({ "tripSchedules.tripId": tripId });
     if (!bus) throw new Error("Trip not found");
 
-    const tripSchedule = bus.tripSchedules.find(schedule => schedule.tripId === tripId);
+    const tripSchedule = bus.tripSchedules.find(
+      (schedule) => schedule.tripId === tripId
+    );
     if (!tripSchedule) throw new Error("Trip schedule not found");
 
     // Check if seats are already reserved
     const reservedSet = new Set(tripSchedule.reservedSeats);
-    const unavailableSeats = seats.filter(seat => reservedSet.has(seat));
+    const unavailableSeats = seats.filter((seat) => reservedSet.has(seat));
     if (unavailableSeats.length > 0) {
-      throw new Error(`Seats ${unavailableSeats.join(", ")} are already reserved.`);
+      throw new Error(
+        `Seats ${unavailableSeats.join(", ")} are already reserved.`
+      );
     }
 
     // Update seat reservations
@@ -237,7 +255,9 @@ export const getReservedSeats = async (req, res) => {
     }
 
     // Find the specific trip
-    const trip = bus.tripSchedules.find((schedule) => schedule.tripId === tripId);
+    const trip = bus.tripSchedules.find(
+      (schedule) => schedule.tripId === tripId
+    );
 
     if (!trip) {
       return res.status(404).json({
@@ -248,9 +268,30 @@ export const getReservedSeats = async (req, res) => {
     // Extract reserved seats
     const reservedSeats = trip.reservedSeats.filter((seat) => seat.isReserved);
 
+    // Fetch payment details for the reserved seats
+    const seatNumbers = reservedSeats.map((seat) => seat.seatNumber);
+    const bookings = await Booking.find({
+      busId: bus._id,
+      tripDate: trip.tripDate,
+      seats: { $in: seatNumbers },
+    }).select("seats paymentStatus username");
+
+    // Map seat details with payment information
+    const reservedSeatsWithPayment = reservedSeats.map((seat) => {
+      const booking = bookings.find((b) => b.seats.includes(seat.seatNumber));
+      return {
+        seatNumber: seat.seatNumber,
+        isReserved: seat.isReserved,
+        reservedBy: seat.reservedBy,
+        bookingDate: seat.bookingDate,
+        paymentStatus: booking ? booking.paymentStatus : "Unknown",
+        username: booking ? booking.username : "Unknown",
+      };
+    });
+
     // Response
     res.status(200).json({
-      message: "Reserved seats retrieved successfully",
+      message: "Reserved seats with payment status retrieved successfully",
       data: {
         busDetails: {
           registrationNumber: bus.registrationNumber,
@@ -265,7 +306,7 @@ export const getReservedSeats = async (req, res) => {
           departureTime: trip.departureTime,
           arrivalTime: trip.arrivalTime,
         },
-        reservedSeats,
+        reservedSeats: reservedSeatsWithPayment,
       },
     });
   } catch (error) {
@@ -275,4 +316,3 @@ export const getReservedSeats = async (req, res) => {
     });
   }
 };
-
