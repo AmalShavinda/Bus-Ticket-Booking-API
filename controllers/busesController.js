@@ -163,3 +163,54 @@ export const searchAvailableBuses = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getSeatsForTrip = async (req, res, next) => {
+  try {
+    const { tripId } = req.query;
+
+    // Validate input
+    if (!tripId) {
+      return res.status(400).json({ message: "Trip ID is required" });
+    }
+
+    // Step 1: Find the bus containing the trip schedule with the given tripId
+    const bus = await Bus.findOne({ "tripSchedules._id": tripId });
+
+    if (!bus) {
+      return res.status(404).json({ message: "Trip not found" });
+    }
+
+    // Step 2: Find the specific trip schedule using the tripId
+    const tripSchedule = bus.tripSchedules.find(
+      (schedule) => schedule._id.toString() === tripId
+    );
+
+    if (!tripSchedule) {
+      return res.status(404).json({ message: "Trip schedule not found" });
+    }
+
+    // Step 3: Prepare response with trip details and all seats
+    const response = {
+      tripId: tripSchedule._id,
+      route: tripSchedule.routeId,
+      price: tripSchedule.price,
+      tripDate: tripSchedule.tripDate,
+      departureTime: tripSchedule.departureTime,
+      arrivalTime: tripSchedule.arrivalTime,
+      seats: tripSchedule.reservedSeats.map((seat) => ({
+        seatNumber: seat.seatNumber,
+        isReserved: seat.isReserved,
+        reservedBy: seat.reservedBy,
+        bookingDate: seat.bookingDate,
+        _id: seat._id,
+      })),
+    };
+
+    res.status(200).json({
+      message: "Seats retrieved successfully",
+      data: response,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
