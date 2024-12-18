@@ -57,11 +57,6 @@ const RouteSchema = new mongoose.Schema(
         max: [180, "Longitude must be between -180 and 180"],
       },
     },
-    price: {
-      type: Number,
-      required: [true, "Price is required"],
-      min: [0, "Price must be a positive number"],
-    },
     subStations: {
       type: [SubStationSchema],
       validate: {

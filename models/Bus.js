@@ -12,7 +12,7 @@ const SeatSchema = new mongoose.Schema({
   },
   reservedBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User', // References the user who booked the seat
+    ref: "User", // References the user who booked the seat
     default: null,
   },
   bookingDate: {
@@ -62,6 +62,11 @@ const TripScheduleSchema = new mongoose.Schema({
       }
       return seats;
     },
+  },
+  price: {
+    type: Number,
+    required: [true, "Price is required"],
+    min: [0, "Price must be a positive number"],
   },
 });
 

@@ -3,6 +3,7 @@ import {
   createBus,
   deleteBus,
   getAllBuses,
+  getSeatsForTrip,
   searchAvailableBuses,
   updateBus,
 } from "../controllers/busesController.js";
@@ -15,5 +16,6 @@ router.put("/:id", verifyAdmin, updateBus);
 router.delete("/:id", verifyAdmin, deleteBus);
 router.get("/", verifyToken, getAllBuses);
 router.get("/search", verifyToken, searchAvailableBuses);
+router.get("/seats", verifyToken, getSeatsForTrip);
 
 export default router;
