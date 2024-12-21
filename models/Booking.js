@@ -14,7 +14,7 @@ const BookingSchema = new mongoose.Schema(
     },
     tripId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "TripSchedule", // Reference to TripSchedule model
+      ref: "TripSchedule",
       required: [true, "Trip ID is required"],
     },
     username: {
@@ -23,7 +23,7 @@ const BookingSchema = new mongoose.Schema(
       required: [true, "Username is required"],
     },
     seats: {
-      type: [Number], // Array of seat numbers
+      type: [Number],
       required: true,
       validate: {
         validator: function (value) {
