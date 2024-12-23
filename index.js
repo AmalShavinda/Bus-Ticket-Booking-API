@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import authRoute from "./routes/authRoute.js";
+import userRoute from "./routes/userRoute.js";
 import busRoute from "./routes/busRoute.js";
 import employeeRoute from "./routes/employeeRoute.js";
 import busRoutesRoute from "./routes/busRoutesRoute.js";
@@ -36,11 +37,12 @@ app.use(cors());
 app.use(cookieParser());
 
 app.use("/api/v1/auth", authRoute);
+app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/buses", busRoute);
 app.use("/api/v1/employees", employeeRoute);
 app.use("/api/v1/routes", busRoutesRoute);
 app.use("/api/v1/bookings", bookingRoute);
-app.use("/api/v1/trips", tripRoute);
+app.use("/api/v1/users", userRoute);
 
 swaggerDocs(app, PORT);
 
