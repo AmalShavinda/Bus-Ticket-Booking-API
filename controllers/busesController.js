@@ -191,8 +191,9 @@ export const getSeatsForTrip = async (req, res, next) => {
 
     // Step 3: Prepare response with trip details and all seats
     const response = {
+      busId: bus._id,
       tripId: tripSchedule._id,
-      route: tripSchedule.routeId,
+      routeId: tripSchedule.routeId,
       price: tripSchedule.price,
       tripDate: tripSchedule.tripDate,
       departureTime: tripSchedule.departureTime,
