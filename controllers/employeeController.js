@@ -112,3 +112,21 @@ export const getAllEmployees = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getAllDrivers = async (req, res, next) => {
+  try {
+    const drivers = await Employee.find({ employeePosition: "Driver" });
+    res.status(200).json(drivers);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAllConductors = async (req, res, next) => {
+  try {
+    const conductors = await Employee.find({ employeePosition: "Conductor" });
+    res.status(200).json(conductors);
+  } catch (error) {
+    next(error);
+  }
+};

@@ -3,6 +3,8 @@ import { verifyAdmin, verifyToken } from "../utils/verifyAdmin.js";
 import {
   createEmployee,
   deleteEmployee,
+  getAllConductors,
+  getAllDrivers,
   // employeeLogin,
   getAllEmployees,
   updateEmployee,
@@ -15,5 +17,7 @@ router.post("/", verifyAdmin, createEmployee);
 router.put("/:id", verifyAdmin, updateEmployee);
 router.delete("/:id", verifyAdmin, deleteEmployee);
 router.get("/", verifyAdmin, getAllEmployees);
+router.get("/drivers", verifyAdmin, getAllDrivers);
+router.get("/conductors", verifyAdmin, getAllConductors);
 
 export default router;
