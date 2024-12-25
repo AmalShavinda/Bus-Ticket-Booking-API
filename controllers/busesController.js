@@ -63,7 +63,18 @@ export const deleteBus = async (req, res, next) => {
 
 export const getAllBuses = async (req, res, next) => {
   try {
-    const buses = await Bus.find();
+    // Use populate to retrieve the registeredNumber field from the Bus model
+    const buses = await Bus.find().populate([
+      {
+        path: "driver", // Populate the driver field
+        select: "employeeName", // Only fetch employeeName from the driver document
+      },
+      {
+        path: "conductor", // Populate the conductor field
+        select: "employeeName", // Only fetch employeeName from the conductor document
+      },
+    ]);
+
     res.status(200).json(buses);
   } catch (error) {
     next(error);

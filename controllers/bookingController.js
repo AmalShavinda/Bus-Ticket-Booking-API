@@ -104,7 +104,20 @@ export const createBooking = async (req, res, next) => {
 // Get all bookings
 export const getAllBookings = async (req, res, next) => {
   try {
-    const bookings = await Booking.find();
+    const bookings = await Booking.find().populate([
+      {
+        path: "busId",
+        select: "registrationNumber",
+      },
+      {
+        path: "routeId",
+        select: "startPoint.name endDestination.name",
+      },
+      // {
+      //   path: "routeId",
+      //   select: "endDestination.name",
+      // },
+    ]);
     res.status(200).json(bookings);
   } catch (error) {
     next(error);

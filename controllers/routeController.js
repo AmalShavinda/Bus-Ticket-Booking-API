@@ -60,7 +60,7 @@ export const deleteRoute = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    // Find and delete the bus by ID
+    // Find and delete the route by ID
     const deletedRoute = await Route.findByIdAndDelete(id);
 
     if (!deletedRoute) {
