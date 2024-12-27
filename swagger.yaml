@@ -1,0 +1,263 @@
+openapi: 3.0.0
+info:
+  title: Ticket Booking API
+  version: 1.0.0
+  description: API documentation for the Bus Ticket Booking system
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      required:
+        - firstname
+        - username
+        - email
+        - password
+      properties:
+        firstname:
+          type: string
+          example: "John"
+        username:
+          type: string
+          example: "john_doe"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        password:
+          type: string
+          minLength: 8
+          example: "password123"
+        isAdmin:
+          type: boolean
+          default: false
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    Bus:
+      type: object
+      required:
+        - busId
+        - registrationNumber
+        - chassisNumber
+        - model
+        - seatCapacity
+        - driver
+        - conductor
+        - owner
+      properties:
+        busId:
+          type: string
+          description: "Unique identifier for the bus"
+          example: "BUS12345"
+        registrationNumber:
+          type: string
+          description: "Unique registration number of the bus"
+          example: "AB-1234"
+        chassisNumber:
+          type: string
+          description: "Unique chassis number of the bus"
+          example: "CH1234567890"
+        model:
+          type: string
+          description: "Model of the bus"
+          example: "Volvo B9R"
+        seatCapacity:
+          type: integer
+          description: "Total seat capacity of the bus"
+          minimum: 1
+          example: 50
+        driver:
+          type: string
+          description: "Name of the driver assigned to the bus"
+          example: "John Doe"
+        conductor:
+          type: string
+          description: "Name of the conductor assigned to the bus"
+          example: "Jane Smith"
+        owner:
+          type: string
+          description: "Owner of the bus"
+          example: "XYZ Transport Company"
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+          description: "Timestamp when the bus record was created"
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+          description: "Timestamp when the bus record was last updated"
+
+    Employee:
+      type: object
+      required:
+        - employeeId
+        - username
+        - employeeName
+        - employeePosition
+        - employeeMobile
+        - password
+      properties:
+        employeeId:
+          type: string
+          description: "Unique identifier for the employee"
+          example: "EMP12345"
+        username:
+          type: string
+          description: "Unique username for the employee"
+          example: "john.doe"
+        employeeName:
+          type: string
+          description: "Full name of the employee"
+          example: "John Doe"
+        employeePosition:
+          type: string
+          description: "Position or role of the employee in the organization"
+          example: "Bus Driver"
+        employeeMobile:
+          type: string
+          description: "Mobile phone number of the employee"
+          pattern: "^[0-9]{10}$"
+          example: "0771234567"
+        password:
+          type: string
+          description: "Password for the employee's account"
+          minLength: 8
+          example: "password123"
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+          description: "Timestamp when the employee record was created"
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+          description: "Timestamp when the employee record was last updated"
+
+security:
+  - BearerAuth: []
+
+paths:
+  /api/v1/buses:
+    post:
+      security:
+        - BearerAuth: []
+      summary: Add a new bus
+      tags: [Buses]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Bus"
+      responses:
+        "201":
+          description: Bus added successfully
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "400":
+          description: Invalid input
+
+    get:
+      security:
+        - BearerAuth: []
+      summary: Get a list of all buses
+      tags: [Buses]
+      responses:
+        "200":
+          description: List of buses retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bus"
+        "401":
+          description: Unauthorized - Token missing or invalid
+        "403":
+          description: Forbidden - Access denied
+        "500":
+          description: Server error
+
+  /api/v1/employees:
+    get:
+      security:
+        - BearerAuth: []
+      summary: Get a list of all employees
+      tags: [Employees]
+      responses:
+        "200":
+          description: List of employees retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Employee"
+        "401":
+          description: Unauthorized - Token missing or invalid
+        "403":
+          description: Forbidden - Access denied
+        "500":
+          description: Server error
+
+  /api/v1/auth/register:
+    post:
+      summary: Add a new user
+      tags: [User]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        "201":
+          description: User added successfully
+        "400":
+          description: Invalid input
+
+  /api/v1/auth/login:
+    post:
+      summary: User login
+      tags: [User]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              required:
+                - username
+                - password
+              example:
+                username: john_doe
+                password: password123
+      responses:
+        "201":
+          description: User logged in successfully
+        "400":
+          description: Invalid credentials
