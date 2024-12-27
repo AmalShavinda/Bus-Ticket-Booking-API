@@ -226,3 +226,30 @@ export const getSeatsForTrip = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getBusesByRouteId = async (req, res, next) => {
+  try {
+    const { routeId } = req.query;
+
+    if (!routeId) {
+      return res.status(400).json({
+        message: "routeId is required",
+      });
+    }
+
+    // Find buses with the specified routeId in their tripSchedules
+    const buses = await Bus.find({
+      tripSchedules: { $elemMatch: { routeId } },
+    }).select("_id registrationNumber"); // Select only _id and registrationNumber
+
+    if (buses.length === 0) {
+      return res.status(404).json({
+        message: "No buses found for the given routeId",
+      });
+    }
+
+    res.status(200).json(buses);
+  } catch (error) {
+    next(error);
+  }
+};

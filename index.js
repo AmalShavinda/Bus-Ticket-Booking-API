@@ -43,6 +43,7 @@ app.use("/api/v1/employees", employeeRoute);
 app.use("/api/v1/routes", busRoutesRoute);
 app.use("/api/v1/bookings", bookingRoute);
 app.use("/api/v1/users", userRoute);
+app.use("/api/v1/trips", tripRoute);
 
 swaggerDocs(app, PORT);
 
