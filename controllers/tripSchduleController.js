@@ -5,8 +5,15 @@ import { v4 as uuidv4 } from "uuid";
 
 // Create a new trip schedule
 export const createTripSchedule = async (req, res) => {
-  const { busId, routeId, tripDate, isReturnTrip, departureTime, arrivalTime } =
-    req.body;
+  const {
+    busId,
+    routeId,
+    tripDate,
+    isReturnTrip,
+    departureTime,
+    arrivalTime,
+    price,
+  } = req.body;
 
   try {
     // Fetch bus details to get seat capacity
@@ -30,18 +37,17 @@ export const createTripSchedule = async (req, res) => {
       isReturnTrip,
       departureTime,
       arrivalTime,
+      price,
       reservedSeats,
     };
 
     bus.tripSchedules.push(newTripSchedule);
     await bus.save();
 
-    res
-      .status(201)
-      .json({
-        message: "Trip schedule created",
-        tripSchedule: newTripSchedule,
-      });
+    res.status(201).json({
+      message: "Trip schedule created",
+      tripSchedule: newTripSchedule,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -109,14 +115,20 @@ export const deleteTripSchedule = async (req, res) => {
   const { busId, tripId } = req.params;
 
   try {
-    const bus = await Bus.findOne({ busId });
-    if (!bus) return res.status(404).json({ message: "Bus not found" });
+    const bus = await Bus.findOne({ _id: busId });
+    if (!bus) {
+      return res.status(404).json({ message: "Bus not found" });
+    }
 
-    const tripSchedule = bus.tripSchedules.id(tripId);
-    if (!tripSchedule)
+    const tripIndex = bus.tripSchedules.findIndex(
+      (schedule) => schedule._id.toString() === tripId
+    );
+    if (tripIndex === -1) {
       return res.status(404).json({ message: "Trip schedule not found" });
+    }
 
-    tripSchedule.remove();
+    // Remove the trip schedule from the array
+    bus.tripSchedules.splice(tripIndex, 1);
     await bus.save();
 
     res.status(200).json({ message: "Trip schedule deleted" });
@@ -223,6 +235,57 @@ export const getTripsForDay = async (req, res) => {
       message: "Trips retrieved successfully",
       trips: formattedTrips,
     });
+  } catch (error) {
+    res.status(500).json({
+      message: "An error occurred while fetching trips",
+      error: error.message,
+    });
+  }
+};
+
+export const getTripsbyDate = async (req, res) => {
+  try {
+    const { date } = req.query;
+
+    if (!date) {
+      return res.status(400).json({
+        message: "Date is required",
+      });
+    }
+
+    const inputDate = new Date(date).toISOString().split("T")[0];
+
+    // Fetch all buses and filter their tripSchedules
+    const busesWithTrips = await Bus.find().populate("tripSchedules.routeId");
+
+    const tripsByDate = busesWithTrips.flatMap((bus) => {
+      return bus.tripSchedules
+        .filter((schedule) => {
+          const tripDate = new Date(schedule.tripDate)
+            .toISOString()
+            .split("T")[0];
+          return tripDate === inputDate;
+        })
+        .map((trip) => ({
+          tripId: trip._id,
+          route: trip.routeId, // Route reference populated
+          tripDate: trip.tripDate,
+          departureTime: trip.departureTime,
+          arrivalTime: trip.arrivalTime,
+          isReturnTrip: trip.isReturnTrip,
+          price: trip.price,
+          busId: bus._id,
+          registrationNumber: bus.registrationNumber,
+        }));
+    });
+
+    if (tripsByDate.length === 0) {
+      return res.status(404).json({
+        message: "No trips found for the given date",
+      });
+    }
+
+    res.status(200).json(tripsByDate);
   } catch (error) {
     res.status(500).json({
       message: "An error occurred while fetching trips",

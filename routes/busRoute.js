@@ -3,6 +3,7 @@ import {
   createBus,
   deleteBus,
   getAllBuses,
+  getBusesByRouteId,
   getSeatsForTrip,
   searchAvailableBuses,
   updateBus,
@@ -17,5 +18,6 @@ router.delete("/:id", verifyAdmin, deleteBus);
 router.get("/", verifyToken, getAllBuses);
 router.get("/search", verifyToken, searchAvailableBuses);
 router.get("/seats", verifyToken, getSeatsForTrip);
+router.get("/routeId", verifyToken, getBusesByRouteId);
 
 export default router;
