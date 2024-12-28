@@ -50,27 +50,17 @@ components:
     Bus:
       type: object
       required:
-        - busId
         - registrationNumber
-        - chassisNumber
         - model
         - seatCapacity
         - driver
         - conductor
         - owner
       properties:
-        busId:
-          type: string
-          description: "Unique identifier for the bus"
-          example: "BUS12345"
         registrationNumber:
           type: string
           description: "Unique registration number of the bus"
           example: "AB-1234"
-        chassisNumber:
-          type: string
-          description: "Unique chassis number of the bus"
-          example: "CH1234567890"
         model:
           type: string
           description: "Model of the bus"
@@ -82,12 +72,12 @@ components:
           example: 50
         driver:
           type: string
-          description: "Name of the driver assigned to the bus"
-          example: "John Doe"
+          description: "GUID of the driver assigned to the bus"
+          example: "63f71f1a4d2345a678c12345"
         conductor:
           type: string
-          description: "Name of the conductor assigned to the bus"
-          example: "Jane Smith"
+          description: "GUID of the conductor assigned to the bus"
+          example: "63f71f1a4d2345a678c54321"
         owner:
           type: string
           description: "Owner of the bus"
@@ -103,42 +93,116 @@ components:
           readOnly: true
           description: "Timestamp when the bus record was last updated"
 
+    TripSchedule:
+      type: object
+      required:
+        - tripId
+        - routeId
+        - busId
+        - tripDate
+        - departureTime
+        - arrivalTime
+        - price
+      properties:
+        tripId:
+          type: string
+          description: "Unique identifier for the trip"
+          example: "TRIP-12345"
+        routeId:
+          type: string
+          description: "GUID of the route associated with the trip"
+          example: "63f71f1a4d2345a678c67890"
+        busId:
+          type: string
+          description: "GUID of the bus assigned to the trip"
+          example: "63f71f1a4d2345a678c12345"
+        tripDate:
+          type: string
+          format: date
+          description: "Date of the trip"
+          example: "2024-12-28"
+        isReturnTrip:
+          type: boolean
+          description: "Indicates if the trip is a return trip"
+          example: false
+        departureTime:
+          type: string
+          format: date-time
+          description: "Departure time of the trip"
+          example: "2024-12-28T08:00:00Z"
+        arrivalTime:
+          type: string
+          format: date-time
+          description: "Arrival time of the trip"
+          example: "2024-12-28T12:00:00Z"
+        reservedSeats:
+          type: array
+          description: "List of reserved seats for the trip"
+          items:
+            $ref: "#/components/schemas/Seat"
+        price:
+          type: number
+          description: "Price of the trip"
+          minimum: 0
+          example: 25.5
+
+    Seat:
+      type: object
+      required:
+        - seatNumber
+      properties:
+        seatNumber:
+          type: integer
+          description: "Seat number"
+          minimum: 1
+          example: 1
+        isReserved:
+          type: boolean
+          description: "Indicates if the seat is reserved"
+          example: false
+        reservedBy:
+          type: string
+          description: "GUID of the user who reserved the seat"
+          example: "63f71f1a4d2345a678c98765"
+        bookingDate:
+          type: string
+          format: date-time
+          description: "Date when the seat was booked"
+          example: "2024-12-27T15:30:00Z"
+
     Employee:
       type: object
       required:
-        - employeeId
         - username
         - employeeName
         - employeePosition
         - employeeMobile
         - password
       properties:
-        employeeId:
-          type: string
-          description: "Unique identifier for the employee"
-          example: "EMP12345"
         username:
           type: string
           description: "Unique username for the employee"
-          example: "john.doe"
+          example: "johndoe"
         employeeName:
           type: string
           description: "Full name of the employee"
           example: "John Doe"
         employeePosition:
           type: string
-          description: "Position or role of the employee in the organization"
-          example: "Bus Driver"
+          description: "Position of the employee in the company"
+          example: "Driver"
+        assignedBus:
+          type: string
+          description: "GUID of the bus assigned to the employee (if applicable)"
+          example: "63f71f1a4d2345a678c12345"
         employeeMobile:
           type: string
-          description: "Mobile phone number of the employee"
-          pattern: "^[0-9]{10}$"
-          example: "0771234567"
+          description: "Mobile number of the employee"
+          example: "9876543210"
         password:
           type: string
-          description: "Password for the employee's account"
-          minLength: 8
-          example: "password123"
+          description: "Password for the employee account"
+          example: "securepassword"
         createdAt:
           type: string
           format: date-time
@@ -149,6 +213,57 @@ components:
           format: date-time
           readOnly: true
           description: "Timestamp when the employee record was last updated"
+
+    Route:
+      type: object
+      required:
+        - startPoint
+        - endDestination
+        - subStations
+      properties:
+        startPoint:
+          type: object
+          required:
+            - name
+          properties:
+            name:
+              type: string
+              description: "Name of the start point"
+              example: "Colombo"
+        endDestination:
+          type: object
+          required:
+            - name
+          properties:
+            name:
+              type: string
+              description: "Name of the end destination"
+              example: "Hambantota"
+        subStations:
+          type: array
+          description: "List of substations in the route"
+          items:
+            $ref: "#/components/schemas/SubStation"
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+          description: "Timestamp when the route record was created"
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+          description: "Timestamp when the route record was last updated"
+
+    SubStation:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: "Name of the substation"
+          example: "Galle"
 
 security:
   - BearerAuth: []
@@ -176,6 +291,27 @@ paths:
         "400":
           description: Invalid input
 
+    put:
+      security:
+        - BearerAuth: []
+      summary: Update a new bus
+      tags: [Buses]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Bus"
+      responses:
+        "201":
+          description: Bus updated successfully
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "400":
+          description: Invalid input
+
     get:
       security:
         - BearerAuth: []
@@ -184,6 +320,101 @@ paths:
       responses:
         "200":
           description: List of buses retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bus"
+        "401":
+          description: Unauthorized - Token missing or invalid
+        "403":
+          description: Forbidden - Access denied
+        "500":
+          description: Server error
+
+  /api/v1/buses/search:
+    get:
+      security:
+        - BearerAuth: []
+      summary: Search buses based on start point, destination, and date
+      tags: [Buses]
+      parameters:
+        - in: query
+          name: startPoint
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: destination
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
+          required: true
+      responses:
+        "200":
+          description: Buses retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bus"
+        "400":
+          description: Invalid input
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /api/v1/buses/routeId:
+    get:
+      security:
+        - BearerAuth: []
+      summary: Get buses by route ID
+      tags: [Buses]
+      parameters:
+        - in: query
+          name: routeId
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Buses retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bus"
+        "400":
+          description: Invalid input
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /api/v1/buses/{busId}:
+    delete:
+      security:
+        - BearerAuth: []
+      summary: Delete a bus by id
+      tags: [Buses]
+      parameters:
+        - in: path
+          name: busId
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Bus deleted successfully
           content:
             application/json:
               schema:
@@ -218,6 +449,357 @@ paths:
           description: Forbidden - Access denied
         "500":
           description: Server error
+
+    post:
+      security:
+        - BearerAuth: []
+      summary: Add a new employee
+      tags: [Employees]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Employee"
+      responses:
+        "201":
+          description: Employee added successfully
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "400":
+          description: Invalid input
+
+  /api/v1/employees/{employeeId}:
+    put:
+      security:
+        - BearerAuth: []
+      summary: Update an employee
+      tags: [Employees]
+      parameters:
+        - in: path
+          name: employeeId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: "Unique username for the employee"
+                  example: "johndoe"
+                employeeName:
+                  type: string
+                  description: "Full name of the employee"
+                  example: "John Doe"
+                employeePosition:
+                  type: string
+                  description: "Position of the employee in the company"
+                  example: "Driver"
+                assignedBus:
+                  type: string
+                  description: "GUID of the bus assigned to the employee (if applicable)"
+                  example: "63f71f1a4d2345a678c12345"
+                employeeMobile:
+                  type: string
+                  description: "Mobile number of the employee"
+                  example: "9876543210"
+              required:
+                - username
+                - employeeName
+                - employeePosition
+                - employeeMobile
+      responses:
+        "200":
+          description: Employee updated successfully
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "400":
+          description: Invalid input
+
+    delete:
+      security:
+        - BearerAuth: []
+      summary: Delete a employee by id
+      tags: [Employees]
+      parameters:
+        - in: path
+          name: employeeId
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Employee deleted successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Employee"
+        "401":
+          description: Unauthorized - Token missing or invalid
+        "403":
+          description: Forbidden - Access denied
+        "500":
+          description: Server error
+
+  /api/v1/employees/drivers:
+    get:
+      security:
+        - BearerAuth: []
+      summary: Get a list of all drivers
+      tags: [Employees]
+      responses:
+        "200":
+          description: List of drivers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Employee"
+        "401":
+          description: Unauthorized - Token missing or invalid
+        "403":
+          description: Forbidden - Access denied
+        "500":
+          description: Server error
+
+  /api/v1/employees/conductors:
+    get:
+      security:
+        - BearerAuth: []
+      summary: Get a list of all conductors
+      tags: [Employees]
+      responses:
+        "200":
+          description: List of conductors retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Employee"
+        "401":
+          description: Unauthorized - Token missing or invalid
+        "403":
+          description: Forbidden - Access denied
+        "500":
+          description: Server error
+
+  /api/v1/trips:
+    get:
+      security:
+        - BearerAuth: []
+      summary: Get a list of all trips
+      tags: [Trips]
+      responses:
+        "200":
+          description: List of trips retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TripSchedule"
+        "401":
+          description: Unauthorized - Token missing or invalid
+        "403":
+          description: Forbidden - Access denied
+        "500":
+          description: Server error
+
+    post:
+      security:
+        - BearerAuth: []
+      summary: Add a new trip
+      tags: [Trips]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                routeId:
+                  type: string
+                  description: "GUID of the route associated with the trip"
+                  example: "63f71f1a4d2345a678c67890"
+                busId:
+                  type: string
+                  description: "GUID of the bus assigned to the trip"
+                  example: "63f71f1a4d2345a678c12345"
+                tripDate:
+                  type: string
+                  format: date
+                  description: "Date of the trip"
+                  example: "2024-12-28"
+                isReturnTrip:
+                  type: boolean
+                  description: "Indicates if the trip is a return trip"
+                  example: false
+                departureTime:
+                  type: string
+                  format: date-time
+                  description: "Departure time of the trip"
+                  example: "2024-12-28T08:00:00Z"
+                arrivalTime:
+                  type: string
+                  format: date-time
+                  description: "Arrival time of the trip"
+                  example: "2024-12-28T12:00:00Z"
+                price:
+                  type: number
+                  description: "Price of the trip"
+                  minimum: 0
+                  example: 25.5
+              required:
+                - routeId
+                - busId
+                - tripDate
+                - departureTime
+                - arrivalTime
+                - price
+      responses:
+        "201":
+          description: Trip added successfully
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "400":
+          description: Invalid input
+
+  /api/v1/trips/date:
+      get:
+        security:
+          - BearerAuth: []
+        summary: Get trips by date
+        tags: [Trips]
+        parameters:
+          - in: query
+            name: date
+            schema:
+              type: string
+              format: date
+            required: true
+        responses:
+          "200":
+            description: Trips retrieved successfully
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/TripSchedule"
+          "400":
+            description: Invalid input
+          "401":
+            description: Unauthorized
+          "403":
+            description: Forbidden
+
+  /api/v1/routes:
+    get:
+      security:
+        - BearerAuth: []
+      summary: Get a list of all routes
+      tags: [Routes]
+      responses:
+        "200":
+          description: List of routes retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Route"
+        "401":
+          description: Unauthorized - Token missing or invalid
+        "403":
+          description: Forbidden - Access denied
+        "500":
+          description: Server error
+
+    post:
+      security:
+        - BearerAuth: []
+      summary: Add a new route
+      tags: [Routes]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Route"
+      responses:
+        "201":
+          description: Route added successfully
+        "400":
+          description: Invalid input
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /api/v1/routes/{routeId}:
+    put:
+      security:
+        - BearerAuth: []
+      summary: Update a route
+      tags: [Routes]
+      parameters:
+        - in: path
+          name: routeId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Route"
+      responses:
+        "201":
+          description: Route updated successfully
+        "400":
+          description: Invalid input
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+    delete:
+      security:
+        - BearerAuth: []
+      summary: Delete a route by routeId
+      tags: [Routes]
+      parameters:
+        - in: path
+          name: routeId
+          schema:
+            type: string
+          required: true
+      responses:
+        "201":
+          description: Route deleted successfully
+        "400":
+          description: Invalid input
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
 
   /api/v1/auth/register:
     post:
@@ -261,3 +843,53 @@ paths:
           description: User logged in successfully
         "400":
           description: Invalid credentials
+
+  /api/v1/users/:
+    get:
+      security:
+        - BearerAuth: []
+      summary: Get a list of all users
+      tags: [User]
+      responses:
+        "200":
+          description: List of users retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized - Token missing or invalid
+        "403":
+          description: Forbidden - Access denied
+        "500":
+          description: Server error
+
+  /api/v1/users/{userId}:
+    delete:
+      security:
+        - BearerAuth: []
+      summary: Delete a user by userId
+      tags: [User]
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized - Token missing or invalid
+        "403":
+          description: Forbidden - Access denied
+        "500":
+          description: Server error

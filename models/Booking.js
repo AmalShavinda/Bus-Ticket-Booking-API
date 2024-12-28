@@ -17,10 +17,10 @@ const BookingSchema = new mongoose.Schema(
       ref: "TripSchedule",
       required: [true, "Trip ID is required"],
     },
-    username: {
-      type: String,
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: [true, "Username is required"],
+      required: [true, "UserId is required"],
     },
     seats: {
       type: [Number],
