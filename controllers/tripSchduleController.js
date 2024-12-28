@@ -30,7 +30,6 @@ export const createTripSchedule = async (req, res) => {
 
     // Create new trip schedule
     const newTripSchedule = {
-      tripId: uuidv4(),
       routeId,
       busId,
       tripDate,
