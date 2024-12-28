@@ -22,11 +22,6 @@ const SeatSchema = new mongoose.Schema({
 });
 
 const TripScheduleSchema = new mongoose.Schema({
-  tripId: {
-    type: String,
-    required: true,
-    unique: true,
-  },
   routeId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Route",

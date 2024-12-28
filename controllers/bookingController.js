@@ -8,15 +8,8 @@ export const createBooking = async (req, res, next) => {
   session.startTransaction();
 
   try {
-    const {
-      busId,
-      routeId,
-      tripId,
-      username,
-      seats,
-      tripDate,
-      paymentDetails,
-    } = req.body;
+    const { busId, routeId, tripId, userId, seats, tripDate, paymentDetails } =
+      req.body;
 
     // Validate bus
     const bus = await Bus.findById(busId)
@@ -70,7 +63,7 @@ export const createBooking = async (req, res, next) => {
       busId,
       routeId,
       tripId,
-      username,
+      userId,
       seats,
       tripDate,
       totalSeats: seats.length,
@@ -113,10 +106,10 @@ export const getAllBookings = async (req, res, next) => {
         path: "routeId",
         select: "startPoint.name endDestination.name",
       },
-      // {
-      //   path: "routeId",
-      //   select: "endDestination.name",
-      // },
+      {
+        path: "userId",
+        select: "firstname",
+      },
     ]);
     res.status(200).json(bookings);
   } catch (error) {
