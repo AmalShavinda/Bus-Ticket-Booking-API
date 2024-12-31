@@ -242,3 +242,76 @@ export const cancelBooking = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+export const getBookingsByUserId = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+
+    // Fetch all bookings for the given userId and populate the necessary fields
+    const bookings = await Booking.find({ userId }).populate([
+      {
+        path: "busId",
+        select: "registrationNumber model", // Fetch specific fields from the bus document
+      },
+      {
+        path: "routeId",
+        select: "startPoint.name endDestination.name", // Fetch specific fields from the route document
+      },
+    ]);
+
+    if (bookings.length === 0)
+      return res
+        .status(404)
+        .json({ message: "No bookings found for this user" });
+
+    res.status(200).json(bookings);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getBookingsByBusIdAndTripDate = async (req, res, next) => {
+  try {
+    const { busId } = req.params;
+    const { tripDate } = req.query; // Extract tripDate from query parameters
+
+    // Build the query object
+    const query = { busId };
+    if (tripDate) {
+      const startOfDay = new Date(tripDate);
+      startOfDay.setHours(0, 0, 0, 0); // Start of the day
+      const endOfDay = new Date(tripDate);
+      endOfDay.setHours(23, 59, 59, 999); // End of the day
+
+      query.tripDate = { $gte: startOfDay, $lte: endOfDay }; // Filter by tripDate
+    }
+
+    // Fetch all bookings matching the query and populate the necessary fields
+    const bookings = await Booking.find(query).populate([
+      {
+        path: "userId",
+        select: "firstname username email", // Fetch specific fields from the user document
+      },
+      {
+        path: "routeId",
+        select: "startPoint.name endDestination.name", // Fetch specific fields from the route document
+      },
+    ]);
+
+    if (bookings.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No bookings found for this bus and trip date" });
+    }
+
+    res.status(200).json(bookings);
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
+
+
+

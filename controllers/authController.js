@@ -24,31 +24,58 @@ export const register = async (req, res, next) => {
 };
 
 // export const login = async (req, res, next) => {
-//     try {
-//       const user = await User.findOne({ username: req.body.username });
+//   const { username, password } = req.body;
 
-//       if (!user) return res.status(404).send("User not found");
+//   try {
+//     // Search for the user in the User collection
+//     let user = await User.findOne({ username });
+//     let role;
 
-//       const isPasswordCorrect = await bcrypt.compare(req.body.password, user.password);
-//       if (!isPasswordCorrect) return res.status(400).send("Wrong password or username");
-
-//       const token = jwt.sign({ id: user._id, isAdmin: user.isAdmin }, process.env.JWT_SECRET, {
-//         expiresIn: "1d",
-//       });
-
-//       const { password, ...otherDetails } = user._doc;
-
-//       res
-//         .cookie("access_token", token, {
-//           httpOnly: true,
-//           secure: process.env.NODE_ENV === "production",
-//         })
-//         .status(200)
-//         .send({token: token, details: { ...otherDetails }, isAdmin: user.isAdmin });
-//     } catch (error) {
-//       next(error);
+//     if (user) {
+//       // Determine role based on isAdmin
+//       role = user.isAdmin ? "admin" : "client";
+//     } else {
+//       // If not found in User, check Employee collection
+//       user = await Employee.findOne({ username });
+//       if (user) {
+//         role = "employee";
+//       }
 //     }
-//   };
+
+//     if (!user) {
+//       return res.status(404).send("User not found");
+//     }
+
+//     // Verify password
+//     const isPasswordCorrect = await bcrypt.compare(password, user.password);
+//     if (!isPasswordCorrect) {
+//       return res.status(400).send("Wrong username or password");
+//     }
+
+//     // Generate token with role embedded in the payload
+//     const token = jwt.sign(
+//       { id: user._id, isAdmin: user.isAdmin }, // Ensure isAdmin is included
+//       process.env.JWT_SECRET,
+//       { expiresIn: "1d" }
+//     );
+
+//     const { password: userPassword, ...otherDetails } = user._doc;
+
+//     // Set cookie and send response
+//     res
+//       .cookie("access_token", token, {
+//         httpOnly: true,
+//         secure: process.env.NODE_ENV === "production",
+//       })
+//       .status(200)
+//       .send({
+//         token, // Only return the token
+//         details: { ...otherDetails },
+//       });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
 export const login = async (req, res, next) => {
   const { username, password } = req.body;
@@ -81,7 +108,7 @@ export const login = async (req, res, next) => {
 
     // Generate token with role embedded in the payload
     const token = jwt.sign(
-      { id: user._id, isAdmin: user.isAdmin }, // Ensure isAdmin is included
+      { id: user._id, role }, // Include the role explicitly
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
@@ -96,8 +123,8 @@ export const login = async (req, res, next) => {
       })
       .status(200)
       .send({
-        token, // Only return the token
-        details: { ...otherDetails },
+        token,
+        details: { ...otherDetails, role }, // Include the role in the response
       });
   } catch (error) {
     next(error);

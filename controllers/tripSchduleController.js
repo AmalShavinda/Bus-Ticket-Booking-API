@@ -1,7 +1,6 @@
 import Bus from "../models/Bus.js";
 import Employee from "../models/Employee.js";
 import Booking from "../models/Booking.js";
-import { v4 as uuidv4 } from "uuid";
 
 // Create a new trip schedule
 export const createTripSchedule = async (req, res) => {
