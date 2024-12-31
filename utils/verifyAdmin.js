@@ -32,9 +32,20 @@ export const verifyToken = (req, res, next) => {
   });
 };
 
+// export const verifyAdmin = (req, res, next) => {
+//   verifyToken(req, res, () => {
+//     if (!req.user.isAdmin) {
+//       return res
+//         .status(403)
+//         .send("You are not authorized to perform this action!");
+//     }
+//     next();
+//   });
+// };
+
 export const verifyAdmin = (req, res, next) => {
   verifyToken(req, res, () => {
-    if (!req.user.isAdmin) {
+    if (req.user.role !== "admin") {
       return res
         .status(403)
         .send("You are not authorized to perform this action!");

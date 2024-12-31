@@ -37,7 +37,6 @@ app.use(cors());
 app.use(cookieParser());
 
 app.use("/api/v1/auth", authRoute);
-app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/buses", busRoute);
 app.use("/api/v1/employees", employeeRoute);
 app.use("/api/v1/routes", busRoutesRoute);
