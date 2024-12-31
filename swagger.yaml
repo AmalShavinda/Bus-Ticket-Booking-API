@@ -265,6 +265,99 @@ components:
           description: "Name of the substation"
           example: "Galle"
 
+    Booking:
+      type: object
+      required:
+        - busId
+        - routeId
+        - tripId
+        - userId
+        - seats
+        - totalSeats
+        - tripDate
+      properties:
+        busId:
+          type: string
+          description: "GUID of the bus associated with the booking"
+          example: "63f71f1a4d2345a678c12345"
+        routeId:
+          type: string
+          description: "GUID of the route associated with the booking"
+          example: "63f71f1a4d2345a678c67890"
+        tripId:
+          type: string
+          description: "GUID of the trip schedule associated with the booking"
+          example: "63f71f1a4d2345a678c98765"
+        userId:
+          type: string
+          description: "GUID of the user who made the booking"
+          example: "63f71f1a4d2345a678c54321"
+        seats:
+          type: array
+          items:
+            type: integer
+          description: "Array of seat numbers booked"
+          example: [5, 6, 7]
+        totalSeats:
+          type: integer
+          description: "Total number of seats booked"
+          minimum: 1
+          example: 3
+        paymentStatus:
+          type: string
+          description: "Status of the payment for the booking"
+          enum:
+            - Pending
+            - Completed
+            - Cancelled
+          default: "Pending"
+          example: "Completed"
+        bookingDate:
+          type: string
+          format: date-time
+          description: "Date and time when the booking was made"
+          example: "2024-12-24T15:30:00.000Z"
+        tripDate:
+          type: string
+          format: date
+          description: "Date of the trip associated with the booking"
+          example: "2024-12-31"
+        paymentDetails:
+          type: object
+          required:
+            - amount
+            - transactionId
+            - paymentMethod
+          description: "Details of the payment for the booking"
+          properties:
+            amount:
+              type: number
+              description: "Total payment amount"
+              example: 1500.0
+            transactionId:
+              type: string
+              description: "Transaction ID of the payment"
+              example: "TXN123456789"
+            paymentMethod:
+              type: string
+              description: "Payment method used"
+              enum:
+                - Credit Card
+                - Debit Card
+                - Cash
+                - Online Banking
+              example: "Credit Card"
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+          description: "Timestamp when the booking record was created"
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+          description: "Timestamp when the booking record was last updated"
+
 security:
   - BearerAuth: []
 
@@ -680,33 +773,70 @@ paths:
           description: Invalid input
 
   /api/v1/trips/date:
-      get:
-        security:
-          - BearerAuth: []
-        summary: Get trips by date
-        tags: [Trips]
-        parameters:
-          - in: query
-            name: date
-            schema:
-              type: string
-              format: date
-            required: true
-        responses:
-          "200":
-            description: Trips retrieved successfully
-            content:
-              application/json:
-                schema:
-                  type: array
-                  items:
-                    $ref: "#/components/schemas/TripSchedule"
-          "400":
-            description: Invalid input
-          "401":
-            description: Unauthorized
-          "403":
-            description: Forbidden
+    get:
+      security:
+        - BearerAuth: []
+      summary: Get trips by date
+      tags: [Trips]
+      parameters:
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
+          required: true
+      responses:
+        "200":
+          description: Trips retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TripSchedule"
+        "400":
+          description: Invalid input
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /api/v1/trips/buses/{busId}/trips/{tripId}:
+    delete:
+      security:
+        - BearerAuth: []
+      summary: Delete a trip
+      tags: [Trips]
+      parameters:
+        - in: path
+          name: busId
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: tripId
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Trip has been deleted successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TripSchedule"
+        "400":
+          description: Bad request - Invalid date format
+        "401":
+          description: Unauthorized - Token missing or invalid
+        "403":
+          description: Forbidden - Access denied
+        "404":
+          description: No bookings found for the specified bus and date
+        "500":
+          description: Server error
 
   /api/v1/routes:
     get:
@@ -800,6 +930,118 @@ paths:
         "403":
           description: Forbidden
 
+  /api/v1/bookings:
+    get:
+      security:
+        - BearerAuth: []
+      summary: Get a list of all bookings
+      tags: [Bookings]
+      responses:
+        "200":
+          description: List of booking retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+        "401":
+          description: Unauthorized - Token missing or invalid
+        "403":
+          description: Forbidden - Access denied
+        "500":
+          description: Server error
+
+    post:
+      security:
+        - BearerAuth: []
+      summary: Add a new booking
+      tags: [Bookings]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Booking"
+      responses:
+        "201":
+          description: Booking added successfully
+        "400":
+          description: Invalid input
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /api/v1/bookings/bus/{busId}:
+    get:
+      security:
+        - BearerAuth: []
+      summary: Get a list of all bookings by bus and optional trip date
+      tags: [Bookings]
+      parameters:
+        - in: path
+          name: busId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: tripDate
+          schema:
+            type: string
+            format: date
+          required: false
+      responses:
+        "200":
+          description: List of bookings by bus retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+        "400":
+          description: Bad request - Invalid date format
+        "401":
+          description: Unauthorized - Token missing or invalid
+        "403":
+          description: Forbidden - Access denied
+        "404":
+          description: No bookings found for the specified bus and date
+        "500":
+          description: Server error
+
+  /api/v1/bookings/{userId}:
+    get:
+      security:
+        - BearerAuth: []
+      summary: Get a list of all bookings by user
+      tags: [Bookings]
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: List of bookings by user retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+        "400":
+          description: Bad request - Invalid date format
+        "401":
+          description: Unauthorized - Token missing or invalid
+        "403":
+          description: Forbidden - Access denied
+        "404":
+          description: No bookings found for the specified bus and date
+        "500":
+          description: Server error
 
   /api/v1/auth/register:
     post:
